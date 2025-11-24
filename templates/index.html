@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Prediction - ML Web App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .currency {
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            display: none;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .prediction-value {
+            font-size: 36px;
+            color: #667eea;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .result-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .detail-label {
+            color: #999;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border: 1px solid #b3d9e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .info-box strong {
+            color: #333;
+        }
+
+        .error-box {
+            display: none;
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .error-box.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .prediction-value {
+                font-size: 28px;
+            }
+
+            .result-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Sales Predictor</h1>
+            <p>Predict sales based on advertising spend</p>
+        </div>
+
+        <div class="info-box">
+            <strong>How it works:</strong> Enter your advertising budget for TV, Radio, and Online channels to predict expected sales.
+        </div>
+
+        <form id="predictionForm">
+            <div class="form-group">
+                <label for="tv">TV Advertising Budget</label>
+                <div class="input-wrapper">
+                    <input type="number" id="tv" name="tv" min="0" step="0.1" placeholder="e.g., 230.1" required>
+                    <span class="currency">$ (thousands)</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="radio">Radio Advertising Budget</label>
+                <div class="input-wrapper">
+                    <input type="number" id="radio" name="radio" min="0" step="0.1" placeholder="e.g., 37.8" required>
+                    <span class="currency">$ (thousands)</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="online">Online Advertising Budget</label>
+                <div class="input-wrapper">
+                    <input type="number" id="online" name="online" min="0" step="0.1" placeholder="e.g., 69.2" required>
+                    <span class="currency">$ (thousands)</span>
+                </div>
+            </div>
+
+            <button type="submit">🎯 Predict Sales</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">Processing...</p>
+        </div>
+
+        <div class="error-box" id="errorBox"></div>
+
+        <div class="result-box" id="resultBox">
+            <h3>📈 Predicted Sales</h3>
+            <div class="prediction-value" id="predictionValue">-</div>
+            <div class="result-details">
+                <div class="detail-item">
+                    <div class="detail-label">TV Budget</div>
+                    <div class="detail-value" id="resultTv">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Radio Budget</div>
+                    <div class="detail-value" id="resultRadio">-</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Online Budget</div>
+                    <div class="detail-value" id="resultOnline">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const loading = document.getElementById('loading');
+        const resultBox = document.getElementById('resultBox');
+        const errorBox = document.getElementById('errorBox');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get values
+            const tv = parseFloat(document.getElementById('tv').value);
+            const radio = parseFloat(document.getElementById('radio').value);
+            const online = parseFloat(document.getElementById('online').value);
+
+            // Reset display
+            errorBox.classList.remove('show');
+            resultBox.classList.remove('show');
+            loading.style.display = 'block';
+
+            try {
+                // Call API
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tv, radio, online })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Show result
+                    document.getElementById('predictionValue').textContent = `$${data.prediction}k`;
+                    document.getElementById('resultTv').textContent = `$${tv}k`;
+                    document.getElementById('resultRadio').textContent = `$${radio}k`;
+                    document.getElementById('resultOnline').textContent = `$${online}k`;
+
+                    resultBox.classList.add('show');
+                } else {
+                    // Show error
+                    errorBox.textContent = data.error || 'An error occurred';
+                    errorBox.classList.add('show');
+                }
+            } catch (error) {
+                errorBox.textContent = 'Network error. Please try again.';
+                errorBox.classList.add('show');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
